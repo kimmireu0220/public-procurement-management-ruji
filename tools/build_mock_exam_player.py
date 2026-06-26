@@ -231,15 +231,6 @@ h1 {{
   min-width: 1.6em;
 }}
 .choice .text {{ flex: 1; line-height: 1.45; }}
-.kbd-hint {{
-  color: var(--muted);
-  font-size: 0.95rem;
-  text-align: center;
-  line-height: 1.4;
-  width: min(1120px, calc(100vw - 32px));
-  margin: 8px auto 0;
-  padding: 0;
-}}
 .toolbar {{
   position: fixed;
   left: 0; right: 0; bottom: 0;
@@ -441,7 +432,6 @@ h1 {{
   <button class="btn" type="button" id="prev-btn">이전</button>
   <button class="btn btn-primary" type="button" id="next-btn" disabled>다음 문제</button>
 </div>
-<p class="kbd-hint" id="toolbar-hint">↑↓ 선지 선택<br>Enter 다음 문제</p>
 
 <script>
 const QUESTIONS = {data};
@@ -630,7 +620,6 @@ function showResult() {{
   const graded = gradeAll();
   document.getElementById("exam-view").style.display = "none";
   document.getElementById("toolbar").style.display = "none";
-  document.getElementById("toolbar-hint").style.display = "none";
   document.getElementById("result").classList.add("show");
   renderResult(graded);
   saveState();
