@@ -70,7 +70,8 @@
 | `output/problem_book_final/` | 최종 문제집 (문제만, MD+HTML) — [`README`](output/problem_book_final/README.md) |
 | `output/mock_exam/` | 필기 모의시험 (회차별 80문항) · 오답노트 — [`README`](output/mock_exam/README.md) |
 | `docs/` | 학습·문제집 프롬프트 · 추출 규칙 · [**시험 안내**](docs/시험_안내.md) — [`README`](docs/README.md) |
-| `tools/` | 빌드 · 검증 · 감사 · 출처 보강 — [`README`](tools/README.md) |
+| `tools/` | 빌드 · 검증 · 감사 · 모의고사 — [`README`](tools/README.md) |
+| [`AGENTS.md`](AGENTS.md) | Cursor 에이전트 역할·모의고사 운영 규칙 |
 
 ## 품질 검증
 
@@ -81,6 +82,19 @@ python3 tools/build_problem_book.py --subject all  # 1~4 일괄 재빌드
 python3 tools/build_problem_book.py --subject 1    # 단일 과목 재빌드
 python3 tools/annotate_source_ranges.py --part6  # 1과목 Part 06 출처 범위 보강
 ```
+
+## 모의고사 (에이전트 출제)
+
+```bash
+python3 tools/prepare_mock_round.py 1   # 브리핑·후보
+# 에이전트 선별 → output/mock_exam/1회차/_draft/
+python3 tools/merge_mock_draft.py 1
+python3 tools/validate_mock_exam.py 1
+```
+
+`merge_mock_draft.py`·`select_mock_exam.py`가 `필기_응시.html` 생성 후 **브라우저를 자동으로 엽니다.**
+
+상세: [`docs/문제집_프롬프트/시험모의_선별.md`](docs/문제집_프롬프트/시험모의_선별.md) · [`tools/README.md`](tools/README.md)
 
 ## 참고 (잔여·오탐)
 

@@ -15,6 +15,7 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 from config import ROOT  # noqa: E402
+from mock_exam_common import open_mock_exam_html  # noqa: E402
 
 CHOICE_RE = re.compile(r"^\s*([①②③④⑤])\s*(.+)$")
 SECTION_RE = re.compile(r"^##\s+(\d)과목")
@@ -396,7 +397,7 @@ def main() -> None:
         "round_dir",
         type=Path,
         nargs="?",
-        help="Mock round directory (e.g. output/mock_exam/3회차)",
+        help="Mock round directory (e.g. output/mock_exam/1회차)",
     )
     parser.add_argument(
         "--mock-root",
@@ -405,6 +406,12 @@ def main() -> None:
         help="Mock exam root (used with --round)",
     )
     parser.add_argument("--round", type=int, help="Round number (with --mock-root)")
+    parser.add_argument(
+        "--open",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="생성 후 기본 브라우저에서 필기_응시.html 열기 (기본: 열기)",
+    )
     args = parser.parse_args()
 
     if args.round_dir:
@@ -425,6 +432,11 @@ def main() -> None:
     out = round_dir / "필기_응시.html"
     out.write_text(build_html(title, questions, round_dir), encoding="utf-8")
     print(f"Wrote {out} ({len(questions)} questions)")
+    if args.open:
+        if open_mock_exam_html(out):
+            print(f"Opened {out} in default browser")
+        else:
+            print(f"Could not open {out}")
 
 
 if __name__ == "__main__":

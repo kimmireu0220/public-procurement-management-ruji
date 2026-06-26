@@ -16,6 +16,36 @@
 | `fix_choice_lines.py` | 문항 줄의 `①②③④`를 각각 한 줄로 분리 | `agent_extract` 수정 |
 | `run_ocr_pages.sh` | 박문각 수험서 JPG 일괄 OCR (macOS Vision) | `output/ocr/` |
 
+## 모의고사 (필기 80문항)
+
+**기본 경로 = 에이전트 출제.** 스크립트는 준비·검증·초안용.
+
+| 스크립트 | 용도 |
+|---|---|
+| `prepare_mock_round.py` | K회차 브리핑·`_candidates/` shortlist 생성 |
+| `merge_mock_draft.py` | `_draft/` → 최종 MD · `manifest.json` · **HTML + 브라우저 자동 열기** |
+| `validate_mock_exam.py` | 형식·중복·상한 검증 (**생성 없음**) |
+| `build_mock_exam_player.py` | `필기_응시.html` 생성 · **기본 브라우저 자동 열기** (`--no-open` 생략) |
+| `select_mock_exam.py` | 자동 초안만 (에이전트 검수 권장) |
+| `mock_exam_common.py` | 공통 모듈 (stable ID, `TOPIC_MAX`, 클러스터 상한) |
+
+```bash
+# 1. 준비 (에이전트용 후보·브리핑)
+python3 tools/prepare_mock_round.py 1
+
+# 2. 에이전트: _candidates/ 에서 선별 → _draft/manifest.json 또는 {N}과목_선별.md
+#    (프롬프트: docs/문제집_프롬프트/시험모의_선별.md)
+
+# 3. 병합·검증·HTML
+python3 tools/merge_mock_draft.py 1
+python3 tools/validate_mock_exam.py 1
+
+# 급할 때 초안만 (HTML 자동 열기 포함)
+python3 tools/select_mock_exam.py 1 --importance
+```
+
+이전 회차 manifest 소급: `prepare_mock_round.py K --backfill-prior`
+
 ## 일반 실행 순서
 
 ```bash
