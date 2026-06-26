@@ -354,7 +354,7 @@ h1 {
     <button class="btn btn-reset restart-btn" type="button">처음부터</button>
     <div class="toolbar-nav">
       <button class="btn btn-secondary" type="button" id="prev-btn">이전</button>
-      <button class="btn btn-primary" type="button" id="next-btn" disabled>다음 문제</button>
+      <button class="btn btn-primary" type="button" id="next-btn">다음 문제</button>
     </div>
   </div>
 </div>
@@ -436,7 +436,6 @@ function render() {
     `${index + 1} / ${total} · 응답 ${answeredCount()} · 미응답 ${unanswered}`;
   document.getElementById("progress").style.width = `${((index + 1) / total) * 100}%`;
   document.getElementById("prev-btn").disabled = index === 0;
-  document.getElementById("next-btn").disabled = !answers[q.num];
   document.getElementById("next-btn").textContent =
     index === total - 1 ? "제출하기" : "다음 문제";
 }
@@ -554,7 +553,6 @@ function showResult() {
 }
 
 function goNext() {
-  if (!answers[QUESTIONS[index].num]) return;
   if (index < QUESTIONS.length - 1) {
     index++;
     saveState();
@@ -593,9 +591,6 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (e.key === "ArrowRight") {
-    if (!answers[QUESTIONS[index].num]) return;
-    const nextBtn = document.getElementById("next-btn");
-    if (nextBtn.disabled) return;
     e.preventDefault();
     goNext();
     return;
@@ -610,9 +605,6 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (e.key !== "Enter") return;
-  if (!answers[QUESTIONS[index].num]) return;
-  const nextBtn = document.getElementById("next-btn");
-  if (nextBtn.disabled) return;
   e.preventDefault();
   goNext();
 });
