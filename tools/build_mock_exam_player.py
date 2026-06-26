@@ -143,6 +143,7 @@ def build_html(title: str, questions: list[dict], round_dir: Path) -> str:
 * {{ box-sizing: border-box; }}
 body {{
   margin: 0;
+  font-size: 18px;
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -157,12 +158,12 @@ header {{
   margin-bottom: 16px;
 }}
 h1 {{
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   margin: 0 0 8px;
 }}
 .meta {{
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 1rem;
 }}
 .progress-bar {{
   height: 8px;
@@ -185,13 +186,13 @@ h1 {{
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }}
 .q-num {{
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--accent);
   font-weight: 700;
   margin-bottom: 8px;
 }}
 .stem {{
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 600;
   white-space: pre-wrap;
   margin-bottom: 18px;
@@ -207,7 +208,7 @@ h1 {{
   align-items: flex-start;
   width: 100%;
   text-align: left;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 2px solid var(--border);
   border-radius: 10px;
   background: #fff;
@@ -232,7 +233,7 @@ h1 {{
 .choice .text {{ flex: 1; line-height: 1.45; }}
 .kbd-hint {{
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   text-align: center;
   line-height: 1.4;
   width: min(1120px, calc(100vw - 32px));
@@ -250,11 +251,12 @@ h1 {{
   justify-content: center;
 }}
 .btn {{
-  padding: 12px 20px;
+  padding: 13px 22px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: #fff;
   font: inherit;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
 }}
@@ -275,7 +277,7 @@ h1 {{
   border-radius: 12px;
   padding: 20px;
 }}
-.result-box h2 {{ margin: 0 0 16px; font-size: 1.25rem; }}
+.result-box h2 {{ margin: 0 0 16px; font-size: 1.4rem; }}
 .score-hero {{
   text-align: center;
   padding: 20px 16px;
@@ -284,18 +286,18 @@ h1 {{
   margin-bottom: 16px;
 }}
 .score-hero .big {{
-  font-size: 2.4rem;
+  font-size: 2.6rem;
   font-weight: 800;
   line-height: 1.1;
 }}
-.score-hero .sub {{ color: var(--muted); margin-top: 6px; font-size: 0.95rem; }}
+.score-hero .sub {{ color: var(--muted); margin-top: 6px; font-size: 1.05rem; }}
 .pass-badge {{
   display: inline-block;
   margin-top: 10px;
   padding: 6px 14px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }}
 .pass-badge.pass {{ background: var(--ok-soft); color: var(--ok); }}
 .pass-badge.fail {{ background: var(--bad-soft); color: var(--bad); }}
@@ -313,13 +315,13 @@ h1 {{
   align-items: center;
   gap: 12px;
 }}
-.subject-card .name {{ font-weight: 700; }}
-.subject-card .detail {{ color: var(--muted); font-size: 0.88rem; }}
-.subject-card .pct {{ font-weight: 800; font-size: 1.1rem; }}
+.subject-card .name {{ font-weight: 700; font-size: 1.05rem; }}
+.subject-card .detail {{ color: var(--muted); font-size: 0.98rem; }}
+.subject-card .pct {{ font-weight: 800; font-size: 1.2rem; }}
 .subject-card.fail-subj {{ border-color: #f5c2c7; background: #fff8f8; }}
 .result-section h3 {{
   margin: 0 0 10px;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }}
 .review-item {{
   border: 1px solid var(--border);
@@ -349,7 +351,7 @@ h1 {{
   white-space: pre-wrap;
   font-weight: 600;
   margin: 12px 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }}
 .review-choices {{ display: flex; flex-direction: column; gap: 8px; }}
 .review-choice {{
@@ -358,7 +360,7 @@ h1 {{
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 0.92rem;
+  font-size: 1rem;
 }}
 .review-choice.correct {{ border-color: var(--ok); background: var(--ok-soft); }}
 .review-choice.wrong {{ border-color: var(--bad); background: var(--bad-soft); }}
@@ -368,14 +370,14 @@ h1 {{
   padding: 10px 12px;
   background: #f6f8fa;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--muted);
 }}
 .tag {{
   display: inline-block;
   padding: 2px 8px;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 700;
   flex-shrink: 0;
 }}
@@ -395,13 +397,14 @@ h1 {{
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+  font-size: 1rem;
 }}
 .all-row:last-child {{ border-bottom: none; }}
-.hint {{ color: var(--muted); font-size: 0.88rem; }}
+.hint {{ color: var(--muted); font-size: 0.98rem; }}
 @media (max-width: 480px) {{
-  .stem {{ font-size: 1rem; }}
-  .choice {{ padding: 10px 12px; }}
+  body {{ font-size: 17px; }}
+  .stem {{ font-size: 1.12rem; }}
+  .choice {{ padding: 12px 14px; }}
 }}
 </style>
 </head>
