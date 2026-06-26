@@ -484,6 +484,7 @@ h1 {{
 const QUESTIONS = {data};
 const STORAGE_KEY = {json.dumps(storage_key)};
 const LABEL_TO_NUM = {{"①":1,"②":2,"③":3,"④":4}};
+const NUM_TO_LABEL = {{"1":"①","2":"②","3":"③","4":"④"}};
 
 let index = 0;
 let answers = {{}};
@@ -684,9 +685,11 @@ function goNext() {{
   }}
 }}
 
-document.getElementById("prev-btn").addEventListener("click", () => {{
+function goPrev() {{
   if (index > 0) {{ index--; saveState(); render(); }}
-}});
+}}
+
+document.getElementById("prev-btn").addEventListener("click", goPrev);
 
 document.getElementById("next-btn").addEventListener("click", goNext);
 
@@ -703,6 +706,28 @@ document.addEventListener("keydown", (e) => {{
   if (e.key === "ArrowUp") {{
     e.preventDefault();
     moveChoice(-1);
+    return;
+  }}
+  if (e.key === "ArrowLeft") {{
+    e.preventDefault();
+    goPrev();
+    return;
+  }}
+  if (e.key === "ArrowRight") {{
+    if (!answers[QUESTIONS[index].num]) return;
+    const nextBtn = document.getElementById("next-btn");
+    if (nextBtn.disabled) return;
+    e.preventDefault();
+    goNext();
+    return;
+  }}
+  const numLabel = NUM_TO_LABEL[e.key];
+  if (numLabel) {{
+    const q = QUESTIONS[index];
+    if (q.choices.some(c => c.label === numLabel)) {{
+      e.preventDefault();
+      selectChoice(numLabel);
+    }}
     return;
   }}
   if (e.key !== "Enter") return;
