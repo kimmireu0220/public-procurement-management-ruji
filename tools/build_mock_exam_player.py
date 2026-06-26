@@ -238,8 +238,18 @@ h1 {{
   border-top: 1px solid var(--border);
   padding: 12px 16px;
   display: flex;
-  gap: 10px;
   justify-content: center;
+}}
+.toolbar-inner {{
+  width: min(1120px, calc(100vw - 32px));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}}
+.toolbar-nav {{
+  display: flex;
+  gap: 10px;
 }}
 .btn {{
   padding: 13px 22px;
@@ -250,13 +260,45 @@ h1 {{
   font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}}
+.btn:hover:not(:disabled) {{ background: #f6f8fa; border-color: #b8c4d0; }}
+.btn:focus-visible {{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }}
 .btn:disabled {{ opacity: 0.45; cursor: not-allowed; }}
+.btn-secondary {{
+  background: #fff;
+  color: var(--text);
+  border-color: #c5ced8;
+}}
+.btn-secondary:hover:not(:disabled) {{
+  background: #eef2f6;
+  border-color: #9aa8b8;
+}}
 .btn-primary {{
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
   min-width: 140px;
+}}
+.btn-primary:hover:not(:disabled) {{
+  background: #1858a8;
+  border-color: #1858a8;
+}}
+.btn-reset {{
+  background: var(--bad);
+  color: #fff;
+  border-color: var(--bad);
+}}
+.btn-reset:hover:not(:disabled) {{
+  background: #9a1c12;
+  border-color: #9a1c12;
+  color: #fff;
+}}
+.btn-reset:focus-visible {{
+  outline-color: var(--bad);
 }}
 #result {{
   display: none;
@@ -420,8 +462,8 @@ h1 {{
       <p class="hint" id="wrong-empty" style="display:none">모든 문항을 맞혔습니다.</p>
     </div>
     <div class="result-actions">
-      <button class="btn" type="button" id="toggle-all-btn">전체 문항 보기</button>
-      <button class="btn btn-primary" type="button" id="restart-btn">처음부터</button>
+      <button class="btn btn-secondary" type="button" id="toggle-all-btn">전체 문항 보기</button>
+      <button class="btn btn-reset restart-btn" type="button">처음부터</button>
     </div>
     <div class="all-list" id="all-list" style="display:none"></div>
     <p class="hint" style="margin-top:12px">합격 기준: 과목당 40점 이상 · 전과목 평균 60점 이상</p>
@@ -429,8 +471,13 @@ h1 {{
 </div>
 
 <div class="toolbar" id="toolbar">
-  <button class="btn" type="button" id="prev-btn">이전</button>
-  <button class="btn btn-primary" type="button" id="next-btn" disabled>다음 문제</button>
+  <div class="toolbar-inner">
+    <button class="btn btn-reset restart-btn" type="button">처음부터</button>
+    <div class="toolbar-nav">
+      <button class="btn btn-secondary" type="button" id="prev-btn">이전</button>
+      <button class="btn btn-primary" type="button" id="next-btn" disabled>다음 문제</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -674,10 +721,20 @@ document.getElementById("toggle-all-btn").addEventListener("click", () => {{
   btn.textContent = show ? "전체 문항 숨기기" : "전체 문항 보기";
 }});
 
-document.getElementById("restart-btn").addEventListener("click", () => {{
+function restartExam() {{
   if (!confirm("저장된 답안을 모두 지우고 처음부터 시작할까요?")) return;
   localStorage.removeItem(STORAGE_KEY);
-  location.reload();
+  index = 0;
+  answers = {{}};
+  document.getElementById("exam-view").style.display = "";
+  document.getElementById("toolbar").style.display = "";
+  document.getElementById("result").classList.remove("show");
+  render();
+  window.scrollTo(0, 0);
+}}
+
+document.querySelectorAll(".restart-btn").forEach(btn => {{
+  btn.addEventListener("click", restartExam);
 }});
 
 clearStateIfRequested();
