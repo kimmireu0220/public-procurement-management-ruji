@@ -28,9 +28,9 @@ body {
   line-height: 1.55;
 }
 .wrap {
-  max-width: 720px;
+  width: min(1120px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 20px 16px 100px;
+  padding: 20px 0 100px;
 }
 header {
   margin-bottom: 16px;
@@ -108,7 +108,16 @@ h1 {
   font-weight: 700;
   min-width: 1.6em;
 }
-.choice .text { flex: 1; }
+.choice .text { flex: 1; line-height: 1.45; }
+.kbd-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.4;
+  width: min(1120px, calc(100vw - 32px));
+  margin: 8px auto 0;
+  padding: 0;
+}
 .toolbar {
   position: fixed;
   left: 0; right: 0; bottom: 0;
@@ -269,7 +278,6 @@ h1 {
 }
 .all-row:last-child { border-bottom: none; }
 .hint { color: var(--muted); font-size: 0.88rem; }
-.kbd-hint { color: var(--muted); font-size: 0.82rem; text-align: center; margin-top: 8px; line-height: 1.4; }
 @media (max-width: 480px) {
   .stem { font-size: 1rem; }
   .choice { padding: 10px 12px; }
@@ -318,6 +326,12 @@ const LABEL_TO_NUM = {"①":1,"②":2,"③":3,"④":4};
 
 let index = 0;
 let answers = {};
+
+function clearStateIfRequested() {
+  if (!new URLSearchParams(location.search).has("reset")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  history.replaceState(null, "", location.pathname);
+}
 
 function loadState() {
   try {
@@ -553,6 +567,7 @@ document.getElementById("restart-btn").addEventListener("click", () => {
   location.reload();
 });
 
+clearStateIfRequested();
 loadState();
 render();
 </script>
