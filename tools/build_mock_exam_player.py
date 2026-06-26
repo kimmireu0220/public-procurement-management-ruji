@@ -20,6 +20,7 @@ from mock_exam_common import open_mock_exam_html  # noqa: E402
 CHOICE_RE = re.compile(r"^\s*([①②③④⑤])\s*(.+)$")
 SECTION_RE = re.compile(r"^##\s+(\d)과목")
 QUESTION_START = re.compile(r"^(\d+)\.\s+(.+)")
+ANSWER_LINE_RE = re.compile(r"^(\d+)\.\s*([①②③④⑤])(?:\s*—\s*(.+))?$")
 SOURCE_RE = re.compile(r"<!--\s*source:\s*(.+?)\s*-->")
 
 
@@ -87,6 +88,33 @@ def parse_questions(md_path: Path) -> tuple[str, list[dict]]:
     return title, questions
 
 
+def clean_explain(text: str) -> str:
+    idx = text.rfind("(Part")
+    if idx >= 0:
+        return text[:idx].rstrip()
+    return text.strip()
+
+
+def parse_answers(ans_path: Path) -> dict[int, dict[str, str]]:
+    answers: dict[int, dict[str, str]] = {}
+    for line in ans_path.read_text(encoding="utf-8").splitlines():
+        m = ANSWER_LINE_RE.match(line.strip())
+        if not m:
+            continue
+        answers[int(m.group(1))] = {
+            "answer": m.group(2),
+            "explain": clean_explain(m.group(3) or ""),
+        }
+    return answers
+
+
+def attach_answers(questions: list[dict], answer_map: dict[int, dict[str, str]]) -> None:
+    for q in questions:
+        info = answer_map.get(q["num"], {})
+        q["answer"] = info.get("answer", "")
+        q["explain"] = info.get("explain", "")
+
+
 def build_html(title: str, questions: list[dict], round_dir: Path) -> str:
     data = json.dumps(questions, ensure_ascii=False)
     storage_key = f"mock_exam_{round_dir.name}"
@@ -107,6 +135,10 @@ def build_html(title: str, questions: list[dict], round_dir: Path) -> str:
   --accent-soft: #e8f1ff;
   --border: #d8dee6;
   --ok: #1a7f37;
+  --ok-soft: #e6f4ea;
+  --bad: #cf222e;
+  --bad-soft: #ffebe9;
+  --warn: #9a6700;
 }}
 * {{ box-sizing: border-box; }}
 body {{
@@ -189,6 +221,10 @@ h1 {{
   border-color: var(--accent);
   background: var(--accent-soft);
 }}
+.choice:focus-visible {{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}}
 .choice .label {{
   font-weight: 700;
   min-width: 1.6em;
@@ -230,15 +266,131 @@ h1 {{
   border-radius: 12px;
   padding: 20px;
 }}
-.answer-preview {{
-  font-family: ui-monospace, monospace;
+.result-box h2 {{ margin: 0 0 16px; font-size: 1.25rem; }}
+.score-hero {{
+  text-align: center;
+  padding: 20px 16px;
+  border-radius: 12px;
   background: #f6f8fa;
-  padding: 12px;
-  border-radius: 8px;
-  word-break: break-all;
-  margin: 12px 0;
+  margin-bottom: 16px;
 }}
+.score-hero .big {{
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+}}
+.score-hero .sub {{ color: var(--muted); margin-top: 6px; font-size: 0.95rem; }}
+.pass-badge {{
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}}
+.pass-badge.pass {{ background: var(--ok-soft); color: var(--ok); }}
+.pass-badge.fail {{ background: var(--bad-soft); color: var(--bad); }}
+.subject-grid {{
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}}
+.subject-card {{
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}}
+.subject-card .name {{ font-weight: 700; }}
+.subject-card .detail {{ color: var(--muted); font-size: 0.88rem; }}
+.subject-card .pct {{ font-weight: 800; font-size: 1.1rem; }}
+.subject-card.fail-subj {{ border-color: #f5c2c7; background: #fff8f8; }}
+.result-section h3 {{
+  margin: 0 0 10px;
+  font-size: 1rem;
+}}
+.review-item {{
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}}
+.review-item summary {{
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 600;
+}}
+.review-item summary::-webkit-details-marker {{ display: none; }}
+.review-item summary::before {{
+  content: "▸";
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-top: 1px;
+}}
+.review-item[open] summary::before {{ content: "▾"; }}
+.review-body {{ padding: 0 14px 14px; border-top: 1px solid var(--border); }}
+.review-stem {{
+  white-space: pre-wrap;
+  font-weight: 600;
+  margin: 12px 0;
+  font-size: 0.95rem;
+}}
+.review-choices {{ display: flex; flex-direction: column; gap: 8px; }}
+.review-choice {{
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}}
+.review-choice.correct {{ border-color: var(--ok); background: var(--ok-soft); }}
+.review-choice.wrong {{ border-color: var(--bad); background: var(--bad-soft); }}
+.review-choice .label {{ font-weight: 700; min-width: 1.6em; }}
+.review-explain {{
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f6f8fa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}}
+.tag {{
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}}
+.tag.ok {{ background: var(--ok-soft); color: var(--ok); }}
+.tag.bad {{ background: var(--bad-soft); color: var(--bad); }}
+.tag.skip {{ background: #f0f0f0; color: var(--muted); }}
+.result-actions {{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}}
+.all-list {{ margin-top: 16px; }}
+.all-row {{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}}
+.all-row:last-child {{ border-bottom: none; }}
 .hint {{ color: var(--muted); font-size: 0.88rem; }}
+.kbd-hint {{ color: var(--muted); font-size: 0.82rem; text-align: center; margin-top: 8px; line-height: 1.4; }}
 @media (max-width: 480px) {{
   .stem {{ font-size: 1rem; }}
   .choice {{ padding: 10px 12px; }}
@@ -257,12 +409,20 @@ h1 {{
 
 <div class="wrap" id="result">
   <div class="result-box">
-    <h2>응시 완료</h2>
-    <p>80문항 답안이 저장되었습니다. 아래 문자열을 복사해 채팅에 붙여넣으면 채점할 수 있습니다.</p>
-    <div class="answer-preview" id="answer-export"></div>
-    <button class="btn btn-primary" type="button" id="copy-btn">답안 복사</button>
-    <button class="btn" type="button" id="restart-btn">처음부터</button>
-    <p class="hint">형식: 공백으로 구분한 선지 번호 (예: 4 3 4 4 2 = ①②③④)</p>
+    <h2>채점 결과</h2>
+    <div id="score-panel"></div>
+    <div id="subject-panel"></div>
+    <div class="result-section" id="wrong-section">
+      <h3>오답 · 미응답 <span id="wrong-count"></span></h3>
+      <div id="wrong-list"></div>
+      <p class="hint" id="wrong-empty" style="display:none">모든 문항을 맞혔습니다.</p>
+    </div>
+    <div class="result-actions">
+      <button class="btn" type="button" id="toggle-all-btn">전체 문항 보기</button>
+      <button class="btn btn-primary" type="button" id="restart-btn">처음부터</button>
+    </div>
+    <div class="all-list" id="all-list" style="display:none"></div>
+    <p class="hint" style="margin-top:12px">합격 기준: 과목당 40점 이상 · 전과목 평균 60점 이상</p>
   </div>
 </div>
 
@@ -270,6 +430,7 @@ h1 {{
   <button class="btn" type="button" id="prev-btn">이전</button>
   <button class="btn btn-primary" type="button" id="next-btn" disabled>다음 문제</button>
 </div>
+<p class="kbd-hint" id="toolbar-hint">↑↓ 선지 선택<br>Enter 다음 문제</p>
 
 <script>
 const QUESTIONS = {data};
@@ -297,6 +458,25 @@ function answeredCount() {{
   return Object.keys(answers).length;
 }}
 
+function selectChoice(label) {{
+  const q = QUESTIONS[index];
+  answers[q.num] = label;
+  saveState();
+  render();
+  document.querySelectorAll("#question-card .choice").forEach(btn => {{
+    if (btn.dataset.label === label) btn.focus();
+  }});
+}}
+
+function moveChoice(delta) {{
+  const q = QUESTIONS[index];
+  const labels = q.choices.map(c => c.label);
+  let cur = labels.indexOf(answers[q.num]);
+  if (cur < 0) cur = delta > 0 ? -1 : labels.length;
+  const next = (cur + delta + labels.length) % labels.length;
+  selectChoice(labels[next]);
+}}
+
 function render() {{
   const q = QUESTIONS[index];
   const card = document.getElementById("question-card");
@@ -313,12 +493,7 @@ function render() {{
     <div class="choices">${{choicesHtml}}</div>`;
 
   card.querySelectorAll(".choice").forEach(btn => {{
-    btn.addEventListener("click", () => {{
-      answers[q.num] = btn.dataset.label;
-      saveState();
-      render();
-      document.getElementById("next-btn").disabled = false;
-    }});
+    btn.addEventListener("click", () => selectChoice(btn.dataset.label));
   }});
 
   const total = QUESTIONS.length;
@@ -336,26 +511,116 @@ function escapeHtml(s) {{
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }}
 
-function exportAnswers() {{
+const SUBJECT_META = {{
+  "1": {{ name: "1과목", range: "1~30", total: 30 }},
+  "2": {{ name: "2과목", range: "31~50", total: 20 }},
+  "3": {{ name: "3과목", range: "51~80", total: 30 }},
+}};
+
+function gradeAll() {{
   return QUESTIONS.map(q => {{
-    const a = answers[q.num];
-    return a ? String(LABEL_TO_NUM[a]) : "_";
-  }}).join(" ");
+    const user = answers[q.num] || "";
+    const correct = q.answer || "";
+    const ok = !!user && user === correct;
+    return {{ ...q, user, correct, ok }};
+  }});
+}}
+
+function subjectStats(graded) {{
+  return Object.entries(SUBJECT_META).map(([id, meta]) => {{
+    const items = graded.filter(q => q.subject === id);
+    const correct = items.filter(q => q.ok).length;
+    const pct = items.length ? Math.round((correct / items.length) * 1000) / 10 : 0;
+    return {{ id, ...meta, correct, count: items.length, pct, pass: pct >= 40 }};
+  }});
+}}
+
+function renderReviewChoices(item) {{
+  return item.choices.map(c => {{
+    let cls = "review-choice";
+    if (c.label === item.correct) cls += " correct";
+    else if (c.label === item.user && item.user !== item.correct) cls += " wrong";
+    return `<div class="${{cls}}"><span class="label">${{c.label}}</span><span>${{escapeHtml(c.text)}}</span></div>`;
+  }}).join("");
+}}
+
+function renderReviewItem(item, open) {{
+  const userText = item.user || "미응답";
+  const tag = item.ok
+    ? `<span class="tag ok">정답</span>`
+    : (item.user
+      ? `<span class="tag bad">오답</span>`
+      : `<span class="tag skip">미응답</span>`);
+  const summary = `${{tag}} <span>${{item.subject ? item.subject + "과목 · " : ""}}${{item.num}}번</span>`;
+  const explain = item.explain
+    ? `<div class="review-explain"><strong>해설</strong> — ${{escapeHtml(item.explain)}}</div>`
+    : "";
+  const detail = item.user && !item.ok
+    ? `<div class="hint" style="margin-top:8px">내 답 ${{item.user}} · 정답 ${{item.correct}}</div>`
+    : (!item.user ? `<div class="hint" style="margin-top:8px">정답 ${{item.correct}}</div>` : "");
+  return `
+    <details class="review-item"${{open ? " open" : ""}}>
+      <summary>${{summary}}</summary>
+      <div class="review-body">
+        <div class="review-stem">${{escapeHtml(item.stem)}}</div>
+        <div class="review-choices">${{renderReviewChoices(item)}}</div>
+        ${{detail}}${{explain}}
+      </div>
+    </details>`;
+}}
+
+function renderResult(graded) {{
+  const totalCorrect = graded.filter(q => q.ok).length;
+  const total = graded.length;
+  const avgPct = total ? Math.round((totalCorrect / total) * 1000) / 10 : 0;
+  const subjects = subjectStats(graded);
+  const allSubjectsPass = subjects.every(s => s.pass);
+  const overallPass = allSubjectsPass && avgPct >= 60;
+  const wrong = graded.filter(q => !q.ok);
+
+  document.getElementById("score-panel").innerHTML = `
+    <div class="score-hero">
+      <div class="big">${{totalCorrect}} / ${{total}}</div>
+      <div class="sub">환산 평균 ${{avgPct}}점</div>
+      <div class="pass-badge ${{overallPass ? "pass" : "fail"}}">${{overallPass ? "합격" : "불합격"}}</div>
+    </div>`;
+
+  document.getElementById("subject-panel").innerHTML = `
+    <div class="subject-grid">
+      ${{subjects.map(s => `
+        <div class="subject-card${{s.pass ? "" : " fail-subj"}}">
+          <div>
+            <div class="name">${{s.name}} (${{s.range}})</div>
+            <div class="detail">${{s.correct}} / ${{s.count}}문항 · ${{s.pass ? "과목 합격" : "과목 미달"}}</div>
+          </div>
+          <div class="pct">${{s.pct}}점</div>
+        </div>`).join("")}}
+    </div>`;
+
+  document.getElementById("wrong-count").textContent = wrong.length ? `(${{wrong.length}})` : "";
+  document.getElementById("wrong-empty").style.display = wrong.length ? "none" : "block";
+  document.getElementById("wrong-list").innerHTML = wrong.map(q => renderReviewItem(q, false)).join("");
+
+  document.getElementById("all-list").innerHTML = graded.map(q => {{
+    const tag = q.ok
+      ? `<span class="tag ok">O</span>`
+      : (q.user ? `<span class="tag bad">X</span>` : `<span class="tag skip">-</span>`);
+    return `<div class="all-row">${{tag}} <span>${{q.num}}번</span> <span class="hint">${{q.user || "—"}} → ${{q.correct}}</span></div>`;
+  }}).join("");
 }}
 
 function showResult() {{
+  const graded = gradeAll();
   document.getElementById("exam-view").style.display = "none";
   document.getElementById("toolbar").style.display = "none";
+  document.getElementById("toolbar-hint").style.display = "none";
   document.getElementById("result").classList.add("show");
-  document.getElementById("answer-export").textContent = exportAnswers();
+  renderResult(graded);
   saveState();
+  window.scrollTo(0, 0);
 }}
 
-document.getElementById("prev-btn").addEventListener("click", () => {{
-  if (index > 0) {{ index--; saveState(); render(); }}
-}});
-
-document.getElementById("next-btn").addEventListener("click", () => {{
+function goNext() {{
   if (!answers[QUESTIONS[index].num]) return;
   if (index < QUESTIONS.length - 1) {{
     index++;
@@ -364,17 +629,43 @@ document.getElementById("next-btn").addEventListener("click", () => {{
   }} else {{
     showResult();
   }}
+}}
+
+document.getElementById("prev-btn").addEventListener("click", () => {{
+  if (index > 0) {{ index--; saveState(); render(); }}
 }});
 
-document.getElementById("copy-btn").addEventListener("click", async () => {{
-  const text = exportAnswers();
-  try {{
-    await navigator.clipboard.writeText(text);
-    document.getElementById("copy-btn").textContent = "복사됨!";
-    setTimeout(() => {{ document.getElementById("copy-btn").textContent = "답안 복사"; }}, 1500);
-  }} catch (e) {{
-    prompt("답안을 복사하세요:", text);
+document.getElementById("next-btn").addEventListener("click", goNext);
+
+document.addEventListener("keydown", (e) => {{
+  if (document.getElementById("result").classList.contains("show")) return;
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === "TEXTAREA" || ae.tagName === "INPUT")) return;
+
+  if (e.key === "ArrowDown") {{
+    e.preventDefault();
+    moveChoice(1);
+    return;
   }}
+  if (e.key === "ArrowUp") {{
+    e.preventDefault();
+    moveChoice(-1);
+    return;
+  }}
+  if (e.key !== "Enter") return;
+  if (!answers[QUESTIONS[index].num]) return;
+  const nextBtn = document.getElementById("next-btn");
+  if (nextBtn.disabled) return;
+  e.preventDefault();
+  goNext();
+}});
+
+document.getElementById("toggle-all-btn").addEventListener("click", () => {{
+  const list = document.getElementById("all-list");
+  const btn = document.getElementById("toggle-all-btn");
+  const show = list.style.display === "none";
+  list.style.display = show ? "block" : "none";
+  btn.textContent = show ? "전체 문항 숨기기" : "전체 문항 보기";
 }});
 
 document.getElementById("restart-btn").addEventListener("click", () => {{
@@ -425,7 +716,16 @@ def main() -> None:
     if not prob.is_file():
         raise SystemExit(f"Not found: {prob}")
 
+    ans_path = round_dir / "필기_모의_정답.md"
+    if not ans_path.is_file():
+        raise SystemExit(f"Not found: {ans_path}")
+
     title, questions = parse_questions(prob)
+    answer_map = parse_answers(ans_path)
+    attach_answers(questions, answer_map)
+    missing = [q["num"] for q in questions if not q.get("answer")]
+    if missing:
+        print(f"Warning: no answer for questions: {missing[:5]}{'...' if len(missing) > 5 else ''}")
     if len(questions) != 80:
         print(f"Warning: parsed {len(questions)} questions (expected 80)")
 
