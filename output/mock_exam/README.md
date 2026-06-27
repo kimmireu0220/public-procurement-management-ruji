@@ -14,21 +14,25 @@
 | `필기_풀이.md` | 채점·해설 (미응시 시 템플릿) |
 | `교차검수.md` | 3단계 교차 검수 기록 |
 | `manifest.json` | 문항 ID (중복 방지) |
+| `출제_피드백.md` | (선택) 응시 후 사용자 메모 — 〈K+1〉 출제 시 참고 |
+| `실기_모의_문제.md` | (선택) 실기 모의 |
+| `실기_모의_정답.md` | (선택) 실기 채점 포인트 |
 | [`오답노트.md`](오답노트.md) | 틀린 문항 누적 |
 
 ## 출제·풀이
 
-- 선별: [`docs/시험모의_선별.md`](../../docs/시험모의_선별.md)
-- 채점·해설: [`docs/시험모의_풀이.md`](../../docs/시험모의_풀이.md)
+- 프롬프트: [`docs/시험모의/`](../../docs/시험모의/) — [`선별.md`](../../docs/시험모의/선별.md) · [`풀이.md`](../../docs/시험모의/풀이.md)
 
 회차 폴더 `〈K〉회차/`는 출제 시 생성한다.
 
-### CBT 로컬 실행
+### 출제 병합 · CBT 로컬 실행
 
 ```bash
-python3 tools/build_cbt_viewer.py --round K   # 기본 K=1, 문제지 수정 후
+python3 tools/merge_mock_draft.py K          # _draft/3과목 선별본 → 문제·정답·manifest
+python3 tools/build_cbt_viewer.py --round K   # 필기_모의_문제.md → HTML 3종
 cd output/mock_exam/〈K〉회차 && python3 -m http.server 8765
 open http://localhost:8765/
 ```
 
-빌드 스크립트: `tools/build_cbt_viewer.py` (`필기_모의_문제.md` → 위 HTML 3종). 키보드·과목별 문항판·답안 초기화 등 UI는 스크립트 내 템플릿에서 관리한다.
+- `merge_mock_draft.py` — 과목별 `_draft/*_선별.md`를 1~80 연번으로 합침 (선별은 에이전트, 병합만 기계)
+- `build_cbt_viewer.py` — CLI 진입점; 파싱 `tools/cbt/parser.py`, UI `tools/cbt/assets/`(shell·css·exam.js·ui.js) → HTML 3종 인라인 빌드
