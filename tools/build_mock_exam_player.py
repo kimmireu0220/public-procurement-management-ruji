@@ -154,6 +154,117 @@ body {{
   margin: 0 auto;
   padding: 20px 0 100px;
 }}
+.exam-shell {{
+  display: flex;
+  gap: 20px;
+  width: min(1320px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 20px 16px 100px;
+  align-items: flex-start;
+}}
+.exam-main {{
+  flex: 1;
+  min-width: 0;
+}}
+.q-nav-panel {{
+  width: 248px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}}
+.q-nav-title {{
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}}
+.q-nav-legend {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}}
+.q-nav-legend span {{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}}
+.q-nav-dot {{
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}}
+.q-nav-dot.current {{ background: var(--accent-soft); border-color: var(--accent); }}
+.q-nav-dot.done {{ background: var(--ok-soft); border-color: #8cd99a; }}
+.q-nav-dot.todo {{ background: #f6f8fa; }}
+.q-nav-subject {{
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 10px 0 6px;
+}}
+.q-nav-subject:first-of-type {{ margin-top: 0; }}
+.q-nav-grid {{
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}}
+.q-nav-btn {{
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 1px;
+  line-height: 1.15;
+  transition: border-color 0.12s, background 0.12s;
+}}
+.q-nav-btn:hover {{
+  border-color: #a8c4f0;
+  background: #fafcff;
+}}
+.q-nav-btn.todo {{
+  background: #f6f8fa;
+  color: var(--muted);
+}}
+.q-nav-btn.done {{
+  background: var(--ok-soft);
+  border-color: #8cd99a;
+  color: var(--ok);
+}}
+.q-nav-btn.current {{
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2);
+}}
+.q-nav-btn .pick {{
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.85;
+}}
+.q-nav-summary {{
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}}
 header {{
   margin-bottom: 16px;
 }}
@@ -241,7 +352,7 @@ h1 {{
   justify-content: center;
 }}
 .toolbar-inner {{
-  width: min(1120px, calc(100vw - 32px));
+  width: min(1320px, calc(100vw - 32px));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -434,21 +545,43 @@ h1 {{
 }}
 .all-row:last-child {{ border-bottom: none; }}
 .hint {{ color: var(--muted); font-size: 0.98rem; }}
+@media (max-width: 960px) {{
+  .exam-shell {{
+    flex-direction: column;
+    width: calc(100vw - 24px);
+    padding-bottom: 100px;
+  }}
+  .q-nav-panel {{
+    width: 100%;
+    position: static;
+    max-height: none;
+    order: -1;
+  }}
+  .q-nav-grid {{
+    grid-template-columns: repeat(10, 1fr);
+  }}
+}}
 @media (max-width: 480px) {{
   body {{ font-size: 17px; }}
   .stem {{ font-size: 1.12rem; }}
   .choice {{ padding: 12px 14px; }}
+  .q-nav-grid {{ grid-template-columns: repeat(8, 1fr); }}
 }}
 </style>
 </head>
 <body>
-<div class="wrap" id="exam-view">
-  <header>
-    <h1>{safe_title}</h1>
-    <div class="meta" id="status">1 / {len(questions)} · 미응답 0</div>
-    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-  </header>
-  <div class="card" id="question-card"></div>
+<div id="exam-view">
+  <div class="exam-shell">
+    <div class="exam-main">
+      <header>
+        <h1>{safe_title}</h1>
+        <div class="meta" id="status">1 / {len(questions)} · 미응답 0</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+      </header>
+      <div class="card" id="question-card"></div>
+    </div>
+    <aside class="q-nav-panel" id="q-nav-panel" aria-label="문항 목록"></aside>
+  </div>
 </div>
 
 <div class="wrap" id="result">
@@ -532,6 +665,53 @@ function moveChoice(delta) {{
   selectChoice(labels[next]);
 }}
 
+function jumpToQuestion(i) {{
+  if (i < 0 || i >= QUESTIONS.length) return;
+  index = i;
+  saveState();
+  render();
+  window.scrollTo({{ top: 0, behavior: "smooth" }});
+}}
+
+function renderNavigator() {{
+  const panel = document.getElementById("q-nav-panel");
+  if (!panel) return;
+
+  const groups = Object.entries(SUBJECT_META).map(([id, meta]) => {{
+    const items = QUESTIONS.filter(q => String(q.subject) === id);
+    const buttons = items.map(q => {{
+      const qi = QUESTIONS.findIndex(x => x.num === q.num);
+      const ans = answers[q.num];
+      let cls = "q-nav-btn";
+      if (qi === index) cls += " current";
+      else if (ans) cls += " done";
+      else cls += " todo";
+      const pick = ans ? `<span class="pick">${{ans}}</span>` : "";
+      return `<button type="button" class="${{cls}}" data-idx="${{qi}}" title="${{ans ? "응답 " + ans : "미응답"}}">${{q.num}}${{pick}}</button>`;
+    }}).join("");
+    return `<div class="q-nav-subject">${{meta.name}} (${{meta.range}})</div><div class="q-nav-grid">${{buttons}}</div>`;
+  }}).join("");
+
+  const answered = answeredCount();
+  const total = QUESTIONS.length;
+  panel.innerHTML = `
+    <div class="q-nav-title">문항 목록</div>
+    <div class="q-nav-legend">
+      <span><i class="q-nav-dot current"></i>현재</span>
+      <span><i class="q-nav-dot done"></i>응답</span>
+      <span><i class="q-nav-dot todo"></i>미응답</span>
+    </div>
+    ${{groups}}
+    <div class="q-nav-summary">응답 <strong>${{answered}}</strong> · 미응답 <strong>${{total - answered}}</strong></div>`;
+
+  panel.querySelectorAll(".q-nav-btn").forEach(btn => {{
+    btn.addEventListener("click", () => jumpToQuestion(Number(btn.dataset.idx)));
+  }});
+
+  const cur = panel.querySelector(".q-nav-btn.current");
+  if (cur) cur.scrollIntoView({{ block: "nearest", behavior: "smooth" }});
+}}
+
 function render() {{
   const q = QUESTIONS[index];
   const card = document.getElementById("question-card");
@@ -559,6 +739,7 @@ function render() {{
   document.getElementById("prev-btn").disabled = index === 0;
   document.getElementById("next-btn").textContent =
     index === total - 1 ? "제출하기" : "다음 문제";
+  renderNavigator();
 }}
 
 function escapeHtml(s) {{
